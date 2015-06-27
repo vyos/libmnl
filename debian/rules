@@ -11,3 +11,10 @@ build:
 
 override_dh_builddeb:
 	dh_builddeb -- -Zbzip2
+	
+override_dh_gencontrol:
+	if [ -f "../.VYOS_DEV_BUILD" ]; then \
+		dh_gencontrol -- -v999.dev; \
+	else \
+		dh_gencontrol; \
+	fi
