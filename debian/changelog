@@ -1,3 +1,10 @@
+libmnl (1.0.3-5+vyos2+lithium3) unstable; urgency=low
+
+  [ Alex Harpin ]
+  * libmnl: add dh_gencontrol to enable development builds
+
+ -- Alex Harpin <development@landsofshadow.co.uk>  Sat, 27 Jun 2015 07:29:40 +0100
+ 
 libmnl (1.0.3-5+vyos2+lithium2) unstable; urgency=low
 
   * Update maintainer address
