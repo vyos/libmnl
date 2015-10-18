@@ -89,7 +89,7 @@ EXPORT_SYMBOL(mnl_attr_get_payload);
  * truncated.
  *
  * This function does not set errno in case of error since it is intended
- * for iterations. Thus, it returns 1 on success and 0 on error.
+ * for iterations. Thus, it returns true on success and false on error.
  *
  * The len parameter may be negative in the case of malformed messages during
  * attribute iteration, that is why we use a signed integer.
@@ -105,7 +105,6 @@ EXPORT_SYMBOL(mnl_attr_ok);
 /**
  * mnl_attr_next - get the next attribute in the payload of a netlink message
  * \param attr pointer to the current attribute
- * \param len length of the remaining bytes in the buffer (passed by reference).
  *
  * This function returns a pointer to the next attribute after the one passed
  * as parameter. You have to use mnl_attr_ok() to ensure that the next
@@ -200,6 +199,7 @@ static const size_t mnl_attr_data_type_len[MNL_TYPE_MAX] = {
 	[MNL_TYPE_U16]		= sizeof(uint16_t),
 	[MNL_TYPE_U32]		= sizeof(uint32_t),
 	[MNL_TYPE_U64]		= sizeof(uint64_t),
+	[MNL_TYPE_MSECS]	= sizeof(uint64_t),
 };
 
 /**
@@ -427,7 +427,6 @@ EXPORT_SYMBOL(mnl_attr_put);
  * mnl_attr_put_u8 - add 8-bit unsigned integer attribute to netlink message
  * \param nlh pointer to the netlink message
  * \param type netlink attribute type
- * \param len netlink attribute payload size
  * \param data 8-bit unsigned integer data that is stored by the new attribute
  *
  * This function updates the length field of the Netlink message (nlmsg_len)
@@ -568,7 +567,6 @@ EXPORT_SYMBOL(mnl_attr_put_check);
  * \param nlh pointer to the netlink message
  * \param buflen size of buffer which stores the message
  * \param type netlink attribute type
- * \param len netlink attribute payload size
  * \param data 8-bit unsigned integer data that is stored by the new attribute
  *
  * This function first checks that the data can be added to the message

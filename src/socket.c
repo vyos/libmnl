@@ -103,22 +103,15 @@ unsigned int mnl_socket_get_portid(const struct mnl_socket *nl)
 }
 EXPORT_SYMBOL(mnl_socket_get_portid);
 
-/**
- * mnl_socket_open - open a netlink socket
- * \param bus the netlink socket bus ID (see NETLINK_* constants)
- *
- * On error, it returns -1 and errno is appropriately set. Otherwise, it
- * returns a valid pointer to the mnl_socket structure.
- */
-struct mnl_socket *mnl_socket_open(int bus)
+static struct mnl_socket *__mnl_socket_open(int bus, int flags)
 {
 	struct mnl_socket *nl;
 
-	nl = calloc(sizeof(struct mnl_socket), 1);
+	nl = calloc(1, sizeof(struct mnl_socket));
 	if (nl == NULL)
 		return NULL;
 
-	nl->fd = socket(AF_NETLINK, SOCK_RAW, bus);
+	nl->fd = socket(AF_NETLINK, SOCK_RAW | flags, bus);
 	if (nl->fd == -1) {
 		free(nl);
 		return NULL;
@@ -126,7 +119,71 @@ struct mnl_socket *mnl_socket_open(int bus)
 
 	return nl;
 }
+
+/**
+ * mnl_socket_open - open a netlink socket
+ * \param bus the netlink socket bus ID (see NETLINK_* constants)
+ *
+ * On error, it returns NULL and errno is appropriately set. Otherwise, it
+ * returns a valid pointer to the mnl_socket structure.
+ */
+struct mnl_socket *mnl_socket_open(int bus)
+{
+	return __mnl_socket_open(bus, 0);
+}
 EXPORT_SYMBOL(mnl_socket_open);
+
+/**
+ * mnl_socket_open2 - open a netlink socket with appropriate flags
+ * \param bus the netlink socket bus ID (see NETLINK_* constants)
+ * \param flags the netlink socket flags (see SOCK_* constants in socket(2))
+ *
+ * This is similar to mnl_socket_open(), but allows to set flags like
+ * SOCK_CLOEXEC at socket creation time (useful for multi-threaded programs
+ * performing exec calls).
+ *
+ * On error, it returns NULL and errno is appropriately set. Otherwise, it
+ * returns a valid pointer to the mnl_socket structure.
+ */
+struct mnl_socket *mnl_socket_open2(int bus, int flags)
+{
+	return __mnl_socket_open(bus, flags);
+}
+EXPORT_SYMBOL(mnl_socket_open2);
+
+/**
+ * mnl_socket_fdopen - associates a mnl_socket object with pre-existing socket.
+ * \param fd pre-existing socket descriptor.
+ *
+ * On error, it returns NULL and errno is appropriately set. Otherwise, it
+ * returns a valid pointer to the mnl_socket structure. It also sets the portID
+ * if the socket fd is already bound and it is AF_NETLINK.
+ *
+ * Note that mnl_socket_get_portid() returns 0 if this function is used with
+ * non-netlink socket.
+ */
+struct mnl_socket *mnl_socket_fdopen(int fd)
+{
+	int ret;
+	struct mnl_socket *nl;
+	struct sockaddr_nl addr;
+	socklen_t addr_len = sizeof(struct sockaddr_nl);
+
+	ret = getsockname(fd, (struct sockaddr *) &addr, &addr_len);
+	if (ret == -1)
+		return NULL;
+
+	nl = calloc(1, sizeof(struct mnl_socket));
+	if (nl == NULL)
+		return NULL;
+
+	nl->fd = fd;
+	if (addr.nl_family == AF_NETLINK)
+		nl->addr = addr;
+
+	return nl;
+}
+EXPORT_SYMBOL(mnl_socket_fdopen);
 
 /**
  * mnl_socket_bind - bind netlink socket
